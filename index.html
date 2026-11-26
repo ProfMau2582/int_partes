@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Por Partes · La Torre ILATE</title>
+<meta name="description" content="Juego de práctica adaptativa de integración por partes: sube la torre y derrota a seis guardianes.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&family=Inter:wght@400;500;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<style>
+:root{
+  --bg:#080818; --panel:#14123a; --panel2:#1c1a4d; --line:rgba(255,255,255,.14);
+  --ink:#f5f2ff; --muted:#b0acd8; --gold:#ffd166; --rose:#ff5d8f; --mint:#4cf2c3; --violet:#8b5cf6;
+  --ok:#4ade80; --bad:#ff6b7a;
+  --serif:Fraunces,Georgia,"Times New Roman",serif; --px:"Press Start 2P",ui-monospace,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);line-height:1.55;min-height:100vh;overflow-x:hidden}
+[hidden]{display:none!important}
+.sky{position:fixed;inset:0;z-index:-3;background:
+  radial-gradient(50rem 36rem at 80% 6%,rgba(255,209,102,.16),transparent 60%),
+  radial-gradient(60rem 40rem at 0% 20%,rgba(139,92,246,.30),transparent 60%),
+  radial-gradient(50rem 30rem at 50% 115%,rgba(255,93,143,.22),transparent 60%),
+  linear-gradient(180deg,#070716,#0e0d2c 60%,#171040)}
+.stars,.stars2{position:fixed;inset:0;z-index:-2;pointer-events:none;background-repeat:repeat}
+.stars{background-image:radial-gradient(1.5px 1.5px at 20px 30px,#fff,transparent),radial-gradient(1px 1px at 90px 120px,#fff,transparent),radial-gradient(1.5px 1.5px at 160px 60px,#ffd166,transparent),radial-gradient(1px 1px at 230px 180px,#fff,transparent);background-size:260px 220px;opacity:.7;animation:tw 5s ease-in-out infinite alternate}
+.stars2{background-image:radial-gradient(1px 1px at 50px 80px,#9ee,transparent),radial-gradient(1.5px 1.5px at 130px 20px,#fff,transparent),radial-gradient(1px 1px at 200px 140px,#f9c,transparent);background-size:310px 260px;opacity:.5;animation:tw 7s ease-in-out infinite alternate-reverse}
+@keyframes tw{from{opacity:.3}to{opacity:.85}}
+.glyphs{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+.glyph{position:absolute;bottom:-12vh;font-family:var(--serif);color:#fff;opacity:.06;animation:drift linear infinite}
+@keyframes drift{from{transform:translateY(0) rotate(0)}to{transform:translateY(-125vh) rotate(26deg)}}
+.wrap{max-width:1100px;margin:0 auto;padding:0 20px}
+.px{font-family:var(--px);font-size:.62rem;letter-spacing:.5px;line-height:1.6}
+
+/* ---------- Botones ---------- */
+.btn{appearance:none;border:0;cursor:pointer;font:inherit;font-weight:800;padding:14px 24px;border-radius:14px;display:inline-flex;align-items:center;gap:10px;text-decoration:none;transition:transform .12s,box-shadow .12s,filter .2s;position:relative}
+.btn.primary{background:linear-gradient(180deg,#ffe08a,#ffb938);color:#3a2300;box-shadow:0 6px 0 #b86a00,0 14px 30px -8px rgba(255,185,56,.6)}
+.btn.primary:hover{transform:translateY(-2px);box-shadow:0 8px 0 #b86a00,0 18px 34px -8px rgba(255,185,56,.7)}
+.btn.primary:active{transform:translateY(4px);box-shadow:0 2px 0 #b86a00}
+.btn.ghost{background:rgba(255,255,255,.07);color:var(--ink);border:1.5px solid var(--line);box-shadow:0 4px 0 rgba(0,0,0,.35)}
+.btn.ghost:hover{background:rgba(255,255,255,.13)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn:focus-visible,.opt:focus-visible,.link:focus-visible{outline:3px solid var(--mint);outline-offset:3px}
+.link{background:none;border:0;color:var(--muted);cursor:pointer;font:inherit;text-decoration:underline;text-underline-offset:3px}
+.link:hover{color:var(--ink)}
+
+/* ---------- Portada ---------- */
+.nav{display:flex;align-items:center;justify-content:space-between;padding:20px 0}
+.logo{font-family:var(--serif);font-weight:900;font-size:1.3rem;display:flex;align-items:center;gap:10px}
+.logo i{font-style:normal;display:grid;place-items:center;width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--gold),var(--rose));color:#2a0c33;font-size:1.25rem;box-shadow:0 4px 0 rgba(0,0,0,.35)}
+.hero{display:grid;grid-template-columns:1.15fr .85fr;gap:30px;align-items:center;padding:20px 0 60px}
+.kicker{display:inline-block;padding:8px 14px;border-radius:99px;border:1.5px solid var(--line);background:rgba(255,255,255,.06);color:var(--mint);font-size:.82rem;font-weight:700}
+h1{font-family:var(--serif);font-weight:900;font-size:clamp(2.5rem,6.6vw,4.7rem);line-height:1.02;margin:18px 0;letter-spacing:-.5px}
+h1 em{font-style:normal;background:linear-gradient(100deg,var(--gold),var(--rose) 55%,#b18cff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{color:var(--muted);font-size:1.12rem;max-width:34rem}
+.cta{display:flex;gap:14px;flex-wrap:wrap;margin-top:28px;align-items:center}
+.spell{margin-top:30px;display:inline-block;padding:16px 22px;border-radius:18px;background:linear-gradient(160deg,rgba(255,255,255,.10),rgba(255,255,255,.03));border:1.5px solid var(--line);font-size:1.35rem;animation:glow 3.6s ease-in-out infinite alternate}
+@keyframes glow{from{box-shadow:0 0 0 rgba(255,209,102,0)}to{box-shadow:0 0 38px rgba(255,209,102,.35)}}
+.towerbox{position:relative;display:grid;place-items:center;min-height:430px}
+.tower-svg{width:min(100%,300px);filter:drop-shadow(0 30px 40px rgba(0,0,0,.6))}
+.moon{position:absolute;top:0;right:8%;width:70px;height:70px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff7d6,#ffd166 60%,#e0a53b);box-shadow:0 0 60px rgba(255,209,102,.55)}
+.climber{position:absolute;left:calc(50% - 138px);font-size:2rem;animation:climb 9s steps(18) infinite;filter:drop-shadow(0 4px 6px rgba(0,0,0,.5))}
+@keyframes climb{0%{bottom:7%;opacity:0}6%{opacity:1}92%{opacity:1}100%{bottom:84%;opacity:0}}
+.win{animation:flick 3s ease-in-out infinite}
+@keyframes flick{0%,100%{opacity:.95}50%{opacity:.55}}
+section.block{padding:30px 0 56px}
+h2{font-family:var(--serif);font-weight:900;font-size:clamp(1.8rem,4vw,2.6rem);line-height:1.1;margin-bottom:10px}
+.sub{color:var(--muted);max-width:42rem;margin-bottom:26px}
+.liate-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.lt{border-radius:18px;padding:18px 12px 14px;text-align:center;border:1.5px solid var(--line);background:var(--panel);box-shadow:0 5px 0 rgba(0,0,0,.4);position:relative}
+.lt b{display:block;font-family:var(--px);font-size:1.7rem;margin-bottom:10px}
+.lt span{font-size:.86rem;color:var(--muted)}
+.lt:nth-child(1) b{color:#ff8fab}.lt:nth-child(2) b{color:#c59bff}.lt:nth-child(3) b{color:var(--gold)}.lt:nth-child(4) b{color:var(--mint)}.lt:nth-child(5) b{color:#ff9f5a}
+.lt::after{content:"›";position:absolute;right:-12px;top:42%;color:var(--muted);font-size:1.4rem}
+.lt:last-child::after{display:none}
+.rule{margin-top:16px;color:var(--muted)}
+.rule b{color:var(--gold)}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.card{background:var(--panel);border:1.5px solid var(--line);border-radius:20px;padding:22px;box-shadow:0 5px 0 rgba(0,0,0,.4)}
+.card .ic{font-size:1.7rem;margin-bottom:10px}
+.card h3{font-size:1.05rem;margin-bottom:6px}
+.card p{color:var(--muted);font-size:.94rem}
+.tower{list-style:none;display:grid;gap:12px}
+.floor{display:grid;grid-template-columns:70px 1fr auto;gap:16px;align-items:center;padding:16px 18px;border-radius:20px;background:var(--panel);border:1.5px solid var(--line);box-shadow:0 5px 0 rgba(0,0,0,.4);transition:transform .15s}
+.floor:hover{transform:translateX(4px)}
+.floor .em{font-size:2.5rem;text-align:center;filter:drop-shadow(0 6px 8px rgba(0,0,0,.5))}
+.floor .nm{font-family:var(--px);font-size:.6rem;color:var(--gold);margin-bottom:6px}
+.floor h3{font-size:1.1rem}
+.floor p{color:var(--muted);font-size:.9rem}
+.floor .ex{background:rgba(0,0,0,.28);border-radius:12px;padding:10px 14px;font-size:.95rem;max-width:260px;overflow-x:auto}
+.floor.locked{opacity:.55}.floor.locked .em{filter:grayscale(1) brightness(.7)}
+.floor.cur{border-color:var(--gold);box-shadow:0 5px 0 rgba(0,0,0,.4),0 0 0 1px var(--gold),0 0 32px rgba(255,209,102,.3)}
+.floor.cleared{border-color:rgba(74,222,128,.6)}
+.floor.cleared .nm::after{content:"  ✔ SUPERADO";color:var(--ok)}
+.floor.cur .nm::after{content:"  ◀ AQUÍ";color:var(--rose)}
+.cta-end{text-align:center;padding:20px 0 60px}
+footer{border-top:1px solid var(--line);color:var(--muted);font-size:.85rem;padding:22px 0 40px;text-align:center}
+
+/* ---------- Juego ---------- */
+.game{max-width:880px;margin:0 auto;padding:14px 18px 70px}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.stats{display:flex;align-items:center;gap:16px}
+.score{font-family:var(--px);font-size:.7rem;color:var(--gold)}
+.hearts{display:flex;gap:6px;font-size:1.5rem}
+.heart{transition:.3s}
+.heart.lost{filter:grayscale(1) brightness(.5);transform:scale(.85)}
+.heart.crack{animation:crack .6s}
+@keyframes crack{30%{transform:scale(1.5) rotate(-12deg)}60%{transform:scale(.7) rotate(8deg)}}
+.arena{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center;padding:16px 20px;border-radius:24px;border:2px solid var(--line);background:linear-gradient(160deg,var(--panel2),var(--panel));box-shadow:0 7px 0 rgba(0,0,0,.45);position:relative;overflow:hidden}
+.arena::before{content:"";position:absolute;inset:0;background:radial-gradient(18rem 10rem at 12% 50%,rgba(255,93,143,.22),transparent 70%);pointer-events:none}
+.boss{font-size:5.2rem;line-height:1;animation:bob 2.6s ease-in-out infinite;filter:drop-shadow(0 12px 14px rgba(0,0,0,.6));position:relative;z-index:1;user-select:none}
+@keyframes bob{50%{transform:translateY(-8px) rotate(2deg)}}
+.boss.hit{animation:hit .55s}
+@keyframes hit{0%{transform:translateX(0)}20%{transform:translateX(-14px) rotate(-8deg);filter:brightness(2.2) drop-shadow(0 0 20px #fff)}45%{transform:translateX(12px) rotate(6deg)}70%{transform:translateX(-6px)}100%{transform:none}}
+.boss.dead{animation:die 1s forwards}
+@keyframes die{to{transform:translateY(60px) rotate(40deg) scale(.4);opacity:0;filter:grayscale(1)}}
+.binfo{position:relative;z-index:1;min-width:0}
+.binfo b{font-family:var(--serif);font-size:1.25rem;display:block}
+.hp{display:flex;gap:6px;margin:8px 0 10px}
+.hp i{flex:1;max-width:70px;height:14px;border-radius:5px;background:linear-gradient(180deg,#ff8a9b,#e0344f);box-shadow:inset 0 -3px 0 rgba(0,0,0,.25),0 0 10px rgba(255,93,143,.45);transition:.5s}
+.hp i.gone{background:rgba(255,255,255,.1);box-shadow:none;transform:scaleX(.85)}
+.bubble{display:inline-block;padding:8px 12px;border-radius:14px;background:rgba(255,255,255,.1);font-size:.9rem;color:#e7e3ff;max-width:100%}
+.dmg{position:absolute;left:46px;top:20px;font-family:var(--px);font-size:1rem;color:var(--gold);text-shadow:0 3px 0 #7a2a00;animation:rise 1.1s forwards;z-index:3;pointer-events:none}
+@keyframes rise{to{transform:translateY(-46px);opacity:0}}
+.floors{display:flex;gap:6px;margin:12px 0 16px}
+.floors i{flex:1;height:8px;border-radius:99px;background:rgba(255,255,255,.12)}
+.floors i.done{background:var(--ok)}.floors i.cur{background:var(--gold);box-shadow:0 0 12px rgba(255,209,102,.7)}
+.panel{background:linear-gradient(160deg,rgba(255,255,255,.08),rgba(255,255,255,.025));border:2px solid var(--line);border-radius:24px;padding:22px;box-shadow:0 7px 0 rgba(0,0,0,.45)}
+.turnbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.pill{padding:6px 12px;border-radius:99px;background:rgba(255,209,102,.15);color:var(--gold);font-weight:700;font-size:.85rem}
+.liate{display:flex;gap:6px;margin-left:auto}
+.liate span{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-family:var(--px);font-size:.62rem;background:rgba(255,255,255,.08);color:var(--muted);position:relative;transition:.3s}
+.liate span.on{background:var(--violet);color:#fff;box-shadow:0 0 14px rgba(139,92,246,.8)}
+.liate span.crown{background:var(--gold);color:#3a2300;box-shadow:0 0 16px rgba(255,209,102,.9)}
+.liate span.crown::after{content:"u";position:absolute;top:-14px;font-family:var(--serif);font-weight:900;font-size:.95rem;color:var(--gold)}
+.prompt{color:var(--muted);font-size:.95rem}
+.problem{font-size:clamp(1.25rem,3.4vw,1.85rem);padding:18px 6px 10px;text-align:center;overflow-x:auto;overflow-y:hidden}
+.hintbox{min-height:1.6em;text-align:center;color:var(--gold);margin-bottom:12px;overflow-x:auto}
+.opts{display:grid;grid-template-columns:1fr;gap:10px}
+.opt{appearance:none;font:inherit;color:inherit;text-align:left;cursor:pointer;display:flex;gap:14px;align-items:center;padding:13px 16px;border-radius:16px;background:rgba(255,255,255,.06);border:2px solid var(--line);min-height:64px;box-shadow:0 4px 0 rgba(0,0,0,.35);transition:transform .12s,border-color .2s,background .2s}
+.opt:hover:not(:disabled){transform:translateY(-2px);border-color:rgba(255,255,255,.4);background:rgba(255,255,255,.11)}
+.opt .k{flex:none;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-family:var(--px);font-size:.6rem;background:rgba(255,255,255,.14)}
+.opt .m{flex:1;overflow-x:auto;overflow-y:hidden;font-size:1.02rem;padding:2px 0}
+.opt:disabled{cursor:default}
+.opt.right{border-color:var(--ok);background:rgba(74,222,128,.15)}
+.opt.right .k{background:var(--ok);color:#052e16}
+.opt.wrong{border-color:var(--bad);background:rgba(255,107,122,.14);animation:shake .4s}
+.opt.wrong .k{background:var(--bad);color:#3b0505}
+.opt.dim{opacity:.5}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.actions{display:flex;justify-content:space-between;align-items:center;margin-top:16px;gap:10px;flex-wrap:wrap}
+.fb{margin-top:16px;border-radius:18px;padding:16px 18px;border:1.5px solid var(--line);background:rgba(0,0,0,.25)}
+.fb h3{font-size:1.1rem;margin-bottom:4px}
+.fb.good h3{color:var(--ok)}.fb.bad h3{color:var(--bad)}
+.fb .why{color:#ffd9de;margin-bottom:6px}
+.fb ol{list-style:none;margin-top:10px;display:grid;gap:8px}
+.fb li{padding:8px 12px;border-left:3px solid var(--mint);background:rgba(255,255,255,.04);border-radius:0 12px 12px 0}
+.fb li .st{display:block;font-size:.72rem;color:var(--mint);font-weight:800;text-transform:uppercase;letter-spacing:.6px}
+.fb li .stm{overflow-x:auto;overflow-y:hidden}
+.result{margin-top:12px;padding:12px 14px;border-radius:14px;font-weight:700}
+.result.crit{background:rgba(74,222,128,.16);color:var(--ok)}
+.result.help{background:rgba(255,209,102,.15);color:var(--gold)}
+.result.fail{background:rgba(255,107,122,.15);color:var(--bad)}
+.flash{position:fixed;inset:0;z-index:15;pointer-events:none;background:radial-gradient(circle,transparent 40%,rgba(255,60,90,.55));opacity:0}
+.flash.on{animation:fl .6s}
+@keyframes fl{0%{opacity:0}25%{opacity:1}100%{opacity:0}}
+.toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,30px);opacity:0;background:#fff;color:#1b1346;padding:12px 20px;border-radius:14px;font-weight:700;box-shadow:0 20px 40px -10px rgba(0,0,0,.6);transition:.4s;z-index:20;pointer-events:none;max-width:92vw;text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.overlay{position:fixed;inset:0;z-index:30;background:rgba(6,6,20,.88);backdrop-filter:blur(6px);display:grid;place-items:center;padding:20px}
+.overlay .box{max-width:520px;text-align:center;background:linear-gradient(160deg,#2a1f66,#12113a);border:2px solid var(--line);border-radius:28px;padding:34px 28px;position:relative;z-index:2;box-shadow:0 10px 0 rgba(0,0,0,.4)}
+.overlay .big{font-size:4rem;margin-bottom:6px}
+.overlay h2{font-size:2rem}
+.overlay p{color:var(--muted);margin:10px 0 22px}
+.conf{position:fixed;top:-20px;width:10px;height:16px;z-index:31;pointer-events:none;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(112vh) rotate(720deg)}}
+.katex{font-size:1.06em}
+@media(max-width:860px){.hero{grid-template-columns:1fr}.towerbox{min-height:360px}.cards{grid-template-columns:1fr 1fr}}
+@media(max-width:620px){
+  .cards{grid-template-columns:1fr}.liate-row{grid-template-columns:repeat(5,1fr);gap:6px}.lt{padding:12px 4px}.lt b{font-size:1.2rem}.lt span{font-size:.68rem}.lt::after{display:none}
+  .floor{grid-template-columns:54px 1fr}.floor .ex{grid-column:1/-1;max-width:none}
+  .arena{grid-template-columns:1fr;text-align:center;justify-items:center}.boss{font-size:4rem}.hp{justify-content:center}
+  .panel{padding:16px}.liate{margin-left:0}
+}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="sky"></div><div class="stars"></div><div class="stars2"></div>
+<div class="glyphs" id="glyphs" aria-hidden="true"></div>
+<div class="flash" id="flash"></div>
+
+<!-- ===================== PORTADA ===================== -->
+<main id="landing">
+  <div class="wrap">
+    <nav class="nav">
+      <div class="logo"><i>∫</i> Por Partes</div>
+      <button class="link" id="resetTop" hidden>Reiniciar progreso</button>
+    </nav>
+
+    <header class="hero">
+      <div>
+        <span class="kicker">⚔ Integración por partes · aventura adaptativa</span>
+        <h1>Sube la <em>Torre ILATE</em></h1>
+        <p class="lead">Seis pisos, seis guardianes. Derrótalos aplicando el hechizo de la integración por partes. Cada combate se juega por turnos y la torre <b>sube o baja de dificultad</b> según cómo pelees.</p>
+        <div class="cta">
+          <button class="btn primary" id="start">⚔ Entrar a la torre</button>
+          <a class="btn ghost" href="#hechizo">Aprender el hechizo</a>
+        </div>
+        <p style="margin-top:14px"><button class="link" id="fresh" hidden>Empezar de cero</button></p>
+        <div class="spell" id="spell" aria-label="Fórmula de integración por partes"></div>
+      </div>
+      <div class="towerbox" aria-hidden="true">
+        <div class="moon"></div>
+        <div id="heroTower"></div>
+        <div class="climber">🧙</div>
+      </div>
+    </header>
+  </div>
+
+  <div class="wrap">
+    <section class="block" id="hechizo">
+      <h2>El hechizo ILATE</h2>
+      <p class="sub">Para elegir <b>u</b> en ∫u dv, mira la lista de izquierda a derecha: <b>u es la primera función de la lista que aparezca</b> en el integrando. El resto, con dx, es dv.</p>
+      <div class="liate-row">
+        <div class="lt"><b>I</b><span>Inversas trig<br>arctan x</span></div>
+        <div class="lt"><b>L</b><span>Logarítmicas<br>ln x</span></div>
+        <div class="lt"><b>A</b><span>Algebraicas<br>x, x², x³</span></div>
+        <div class="lt"><b>T</b><span>Trigonométricas<br>sen x, cos x</span></div>
+        <div class="lt"><b>E</b><span>Exponenciales<br>eˣ</span></div>
+      </div>
+      <p class="rule">Ejemplo: en ∫ x·sen x dx aparecen <b>A</b> y <b>T</b>. A va primero, así que u = x y dv = sen x dx.</p>
+    </section>
+
+    <section class="block">
+      <h2>Cómo se juega</h2>
+      <p class="sub">Nada de memorizar: cada combate te hace pensar un paso a la vez.</p>
+      <div class="cards">
+        <div class="card"><div class="ic">⚔</div><h3>Combates por turnos</h3><p>Cada ejercicio se resuelve paso a paso: aplicas por partes, vuelves a aplicar si hace falta y al final reúnes el botín (la primitiva).</p></div>
+        <div class="card"><div class="ic">❤️</div><h3>Tres golpes para vencer</h3><p>Cada combate perfecto le quita 1 de vida al guardián. Con 3 golpes sin errores subes de piso. Si fallas dos combates, retrocedes un piso.</p></div>
+        <div class="card"><div class="ic">💡</div><h3>Los errores enseñan</h3><p>Las opciones incorrectas son errores típicos y la aplicación te explica por qué falla cada una. Si usas la pista ILATE, el combate no cuenta como golpe.</p></div>
+      </div>
+    </section>
+
+    <section class="block" id="torre">
+      <h2>Los seis pisos</h2>
+      <p class="sub">De una sola aplicación a los acertijos del Oráculo.</p>
+      <ol class="tower" id="tower"></ol>
+    </section>
+
+    <div class="cta-end"><button class="btn primary" id="start2">⚔ Entrar a la torre</button></div>
+  </div>
+  <footer><div class="wrap">Práctica de Cálculo Integral · Prototipo · Todo ocurre en tu navegador; el progreso se guarda solo en este dispositivo.</div></footer>
+</main>
+
+<!-- ===================== JUEGO ===================== -->
+<main id="gameView" class="game" hidden>
+  <div class="bar">
+    <button class="link" id="home">← La torre</button>
+    <div class="stats"><span class="score" id="score">★ 0</span><span class="hearts" id="hearts" aria-label="Corazones"></span></div>
+  </div>
+  <section class="arena" id="arena">
+    <div class="boss" id="boss">🗿</div>
+    <div class="binfo">
+      <div class="px" id="floorTag" style="color:var(--gold)">PISO 1</div>
+      <b id="bossName">Gólem</b>
+      <div class="hp" id="hp" aria-label="Vida del guardián"><i></i><i></i><i></i></div>
+      <div class="bubble" id="bubble"></div>
+    </div>
+  </section>
+  <div class="floors" id="mini" aria-hidden="true"></div>
+
+  <section class="panel">
+    <div class="turnbar">
+      <span class="px" id="turnTag">TURNO 1/2</span>
+      <span class="pill" id="turnType">⚔ Ataque</span>
+      <div class="liate" id="liate" title="Regla ILATE"><span>I</span><span>L</span><span>A</span><span>T</span><span>E</span></div>
+    </div>
+    <p class="prompt" id="prompt"></p>
+    <div class="problem" id="problem"></div>
+    <div class="hintbox" id="hint" aria-live="polite"></div>
+    <div class="opts" id="opts"></div>
+    <div id="fbWrap" aria-live="polite"></div>
+    <div class="actions">
+      <button class="btn ghost" id="hintBtn" style="padding:10px 16px;font-size:.92rem">💡 Pista ILATE</button>
+      <button class="btn primary" id="nextBtn" hidden>Siguiente →</button>
+    </div>
+  </section>
+  <p style="margin-top:14px;text-align:center;color:var(--muted);font-size:.85rem">Atajos: teclas <b>1–4</b> (o A–D) para responder · <b>Enter</b> para continuar</p>
+</main>
+
+<div class="overlay" id="levelup" hidden>
+  <div class="box">
+    <div class="big" id="luEmoji">🗿</div>
+    <h2 id="luTitle">¡Guardián derrotado!</h2>
+    <p id="luText"></p>
+    <button class="btn primary" id="luBtn">Subir al siguiente piso 🪜</button>
+  </div>
+</div>
+<div class="overlay" id="finale" hidden>
+  <div class="box">
+    <div class="big">🏰</div>
+    <h2>¡Conquistaste la Torre ILATE!</h2>
+    <p>Derrotaste a los seis guardianes. Ya sabes elegir u, repetir el hechizo cuantas veces haga falta y reconocer una integral cíclica cuando la ves.</p>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="btn primary" id="keep">Seguir entrenando</button>
+      <button class="btn ghost" id="goHome">Volver a la torre</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/*GEN-START*/
+const T=String.raw;
+const rnd=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const pick=a=>a[rnd(0,a.length-1)];
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=rnd(0,i);[a[i],a[j]]=[a[j],a[i]];}return a;};
+const gcd=(a,b)=>b?gcd(b,a%b):Math.abs(a);
+const fr=(n,d=1)=>{if(d<0){n=-n;d=-d;}const g=gcd(n,d)||1;return [n/g,d/g];};
+const frMul=(a,b)=>fr(a[0]*b[0],a[1]*b[1]);
+const frAdd=(a,b)=>fr(a[0]*b[1]+b[0]*a[1],a[1]*b[1]);
+const frNeg=a=>[-a[0],a[1]];
+const frVal=a=>a[0]/a[1];
+const xp=m=>m===1?'x':T`x^{${m}}`;
+const xm1=m=>m===1?'':m===2?'x':T`x^{${m-1}}`;
+const lnP=p=>p===0?'':p===1?T`\ln x`:T`\ln^{${p}}x`;
+
+/* ---------- Términos: c · x^k · e^{ex} · sen/cos(bx) · ln^l x ---------- */
+const tm=(c,k=0,o={})=>({c:fr(c[0],c[1]),k,e:0,t:null,b:1,l:0,...o});
+const neg=t=>({...t,c:frNeg(t.c)});
+const spec=(kind,b)=>kind==='exp'?{e:b}:{t:kind,b};
+function fnTex(t){
+  let s='';
+  if(t.e)s+=t.e===1?'e^{x}':t.e===-1?'e^{-x}':T`e^{${t.e}x}`;
+  if(t.t)s+=t.b===1?'\\'+t.t+' x':'\\'+t.t+'('+t.b+'x)';
+  if(t.l)s+=lnP(t.l);
+  return s;
+}
+function magTex(t){
+  const [n,d]=t.c,an=Math.abs(n),fn=fnTex(t);
+  let num=an!==1?String(an):'';
+  if(t.k>0)num+=xp(t.k);
+  if(fn)num+=(t.k>0&&fn[0]==='e'?'\\,':'')+fn;
+  let den=d!==1?String(d):'';
+  if(t.k<0)den+=xp(-t.k);
+  if(!num)num='1';
+  return den?T`\frac{${num}}{${den}}`:num;
+}
+function itemMag(it){
+  if(!it.int)return magTex(it);
+  const [n,d]=it.c,an=Math.abs(n);
+  const co=d===1?(an===1?'':String(an)):T`\frac{${an}}{${d}}`;
+  if(it.lab)return co+it.lab;
+  const inn=magTex({...it.inner,c:[1,1]});
+  return co+(inn==='1'?T`\int dx`:T`\int ${inn}\,dx`);
+}
+function listTex(items){
+  items=items.filter(i=>i.c[0]!==0);
+  let s='';
+  items.forEach((it,i)=>{const ng=it.c[0]<0;s+=(i===0?(ng?'-':''):(ng?'-':'+'))+itemMag(it);});
+  return s||'0';
+}
+const evT=(t,x)=>frVal(t.c)*Math.pow(x,t.k)*(t.e?Math.exp(t.e*x):1)*(t.t==='sin'?Math.sin(t.b*x):t.t==='cos'?Math.cos(t.b*x):1)*(t.l?Math.pow(Math.log(x),t.l):1);
+const gfun=(kind,b)=>x=>kind==='sin'?Math.sin(b*x):kind==='cos'?Math.cos(b*x):Math.exp(b*x);
+const W=(tex,why,extra)=>({tex,why,...extra});
+function choose3(correctTex,cands){
+  const seen=new Set([correctTex]),out=[];
+  for(const c of cands){if(!seen.has(c.tex)){seen.add(c.tex);out.push(c);}if(out.length===3)break;}
+  return out;
+}
+const PROMPT={
+  apply:'Elige u y dv con la regla ILATE (la mejor elección es la que simplifica la integral) y aplica ∫u dv = uv − ∫v du. ¿A qué queda igual?',
+  final:'Reúne todos los términos. ¿Cuál es la primitiva de la integral original?',
+  rewrite:'Antes de integrar, reescribe la integral. ¿Cuál es la forma útil?',
+  sub:'Primero conviene una sustitución. ¿En qué se convierte la integral?',
+  solve:'Reemplaza y despeja I. ¿Cuál es el valor de la integral I?'
+};
+
+/* ---------- Opciones finales (suma de términos) ---------- */
+function finalTurn(terms,b,origTex,hint,info){
+  const n=terms.length,last=terms[n-1];
+  const mk=(items,why)=>({items,tex:listTex(items)+'+C',why});
+  const cands=[
+    mk(terms.map((t,i)=>i===n-1?neg(t):t),'Revisa el signo del último término: llega con el signo acumulado de los pasos anteriores.'),
+    mk(terms.map((t,i)=>i===0?neg(t):t),'Revisa el signo del primer término (el uv del primer paso).')
+  ];
+  if(n>=2)cands.push(mk(terms.slice(0,n-1),'Falta un término: la última integral también aporta su primitiva.'));
+  if(Math.abs(b)!==1)cands.push(mk(terms.map((t,i)=>i===n-1?{...t,c:frMul(t.c,[Math.abs(b),1])}:t),`Al integrar la última función de argumento ${b}x falta dividir entre ${b}.`));
+  if(last.t)cands.push(mk(terms.map((t,i)=>i===n-1?{...t,t:t.t==='sin'?'cos':'sin'}:t),'Revisa la última integral básica: ∫sen = −cos y ∫cos = sen.'));
+  if(n>=3)cands.push(mk(terms.map((t,i)=>i===1?neg(t):t),'Hay un signo mal en un término intermedio: los signos se arrastran en cada aplicación.'));
+  const ok=listTex(terms)+'+C';
+  return {type:'final',cur:T`\int ${origTex}\,dx`,correct:{tex:ok},wrong:choose3(ok,shuffle(cands)),hint,info};
+}
+
+/* ---------- Motor A: p(x)=x^m por sen/cos/exp(bx) ---------- */
+const VOF={sin:{s:-1,kv:'cos'},cos:{s:1,kv:'sin'},exp:{s:1,kv:'exp'}};
+function polyApply(m,kind,b){
+  const {s,kv}=VOF[kind],vc=fr(s,b);
+  return {vc,kv,A:tm(vc,m,spec(kv,b)),gam:frMul([-m,1],vc),inner:tm([1,1],m-1,spec(kv,b))};
+}
+function polyWrongs(m,kind,b,lead){
+  const {vc,kv,A,gam,inner}=polyApply(m,kind,b);
+  const L=x=>frMul(lead,x);
+  const Ao=tm(L(A.c),m,spec(kv,b));
+  const io=(c,inn=inner)=>({int:true,c:L(c),inner:inn});
+  const gp={sin:{c:b,k:'cos'},cos:{c:-b,k:'sin'},exp:{c:b,k:'exp'}}[kind];
+  const swap={items:[tm(L(fr(1,m+1)),m+1,spec(kind,b)),io(fr(-gp.c,m+1),tm([1,1],m+1,spec(gp.k,b)))],swap:true,
+    why:`Es una igualdad válida, pero no simplifica: la potencia de x sube a x^${m+1} y la integral se complica. Con ILATE, u = x^${m}.`};
+  const pool=[
+    {items:[Ao,io(frNeg(gam))],why:'Revisa el signo de la integral que queda: es −∫v du y v puede ser negativa (∫sen = −cos).'},
+    {items:[neg(Ao),io(gam)],why:'El signo de uv está mal: revisa v = ∫dv (∫sen = −cos, ∫cos = sen).'},
+    {items:[neg(Ao),io(frNeg(gam))],why:'Cuidado con el signo de v: afecta a los dos términos de la fórmula.'}
+  ];
+  if(Math.abs(b)!==1){const vw=fr(vc[0]<0?-1:1,1);pool.push({items:[tm(L(vw),m,spec(kv,b)),io(frMul([-m,1],vw))],why:`Al integrar f(${b}x) hay que dividir entre ${b}: falta ese factor en v.`});}
+  if(m>=2)pool.push({items:[Ao,io(frNeg(vc))],why:`Al derivar u = x^${m} aparece el factor ${m} (du = ${m===2?'2x':m+'x^'+(m-1)} dx): no lo olvides.`});
+  return {okItems:[Ao,io(gam)],wrongs:[swap,...shuffle(pool)]};
+}
+function polyEx({m,kind,b,lam=[1,1],origTex=null,pre=[]}){
+  const turns=[...pre];
+  let mm=m,ck=kind,Mult=lam;const acc=[];
+  for(let s=0;s<m;s++){
+    const lead=s===0?lam:[1,1],m0=mm,c0=ck;
+    const ap=polyApply(m0,c0,b);
+    const {okItems,wrongs}=polyWrongs(m0,c0,b,lead);
+    const okTex=listTex(okItems);
+    const G=gfun(c0,b);
+    const dvTex=magTex(tm([1,1],0,spec(c0,b)));
+    turns.push({type:'apply',
+      cur:listTex([{int:true,c:lead,inner:tm([1,1],m0,spec(c0,b))}]),
+      correct:{tex:okTex,items:okItems},
+      wrong:choose3(okTex,wrongs.map(w=>({...w,tex:listTex(w.items)}))),
+      fk:x=>frVal(lead)*Math.pow(x,m0)*G(x),
+      hint:T`u=${xp(m0)},\quad dv=${dvTex}\,dx`,
+      info:[{t:'Elegimos (ILATE: A primero)',tex:T`u=${xp(m0)},\quad dv=${dvTex}\,dx`},
+            {t:'Calculamos',tex:T`du=${m0===1?'':m0}${xm1(m0)}${m0===1?'':T`\,`}dx,\quad v=${listTex([tm(ap.vc,0,spec(ap.kv,b))])}`}]});
+    acc.push(tm(frMul(Mult,ap.A.c),m0,spec(ap.kv,b)));
+    Mult=frMul(Mult,ap.gam);ck=ap.kv;mm--;
+  }
+  const fc={cos:{c:fr(1,b),k:'sin'},sin:{c:fr(-1,b),k:'cos'},exp:{c:fr(1,b),k:'exp'}}[ck];
+  const fin=tm(frMul(Mult,fc.c),0,spec(fc.k,b));
+  const terms=acc.concat([fin]);
+  const orig=origTex||listTex([tm(lam,m,spec(kind,b))]);
+  turns.push(finalTurn(terms,b,orig,T`\text{Suma los términos de cada paso, con sus signos}`,
+    [{t:'Última integral',tex:T`\int ${magTex(tm([1,1],0,spec(ck,b)))}\,dx=${listTex([tm(fc.c,0,spec(fc.k,b))])}`},
+     {t:'Primitiva',tex:listTex(terms)+'+C'}]));
+  const Gk=gfun(kind,b);
+  return {tex:orig,cats:['A',kind==='exp'?'E':'T'],turns,
+    f:x=>frVal(lam)*Math.pow(x,m)*Gk(x),F:x=>terms.reduce((s,t)=>s+evT(t,x),0)};
+}
+
+/* ---------- Motor B: x^n · ln^j x ---------- */
+function lnEx({n,j,lam=[1,1]}){
+  const turns=[],acc=[];
+  let jj=j,Mult=lam;
+  const dvTex=n===0?'dx':magTex(tm([1,1],n))+T`\,dx`;
+  for(let s=0;s<j;s++){
+    const lead=s===0?lam:[1,1],j0=jj,L=x=>frMul(lead,x);
+    const A=tm(fr(1,n+1),n+1,{l:j0}),gam=fr(-j0,n+1),inner=tm([1,1],n,{l:j0-1});
+    const Ao=tm(L(A.c),n+1,{l:j0});
+    const io=(c,inn=inner)=>({int:true,c:L(c),inner:inn});
+    const okItems=[Ao,io(gam)],okTex=listTex(okItems);
+    const noDu={items:[Ao,io(gam,tm([1,1],n+1,{l:j0-1}))],why:'La derivada de ln x es 1/x: al calcular du no olvides ese 1/x (luego v·du se simplifica).'};
+    const pool=[
+      {items:[Ao,io(frNeg(gam))],why:'Revisa el signo: ∫u dv = uv − ∫v du.'},
+      {items:[neg(Ao),io(gam)],why:'El signo de uv está mal: v = ∫ dv conserva el signo de x^n.'},
+      {items:[neg(Ao),io(frNeg(gam))],why:'Cuidado con el signo global de la fórmula.'}
+    ];
+    if(n!==0)pool.push({items:[tm(L([1,1]),n+1,{l:j0}),io(fr(-j0,1))],why:`Al integrar x^${n} hay que dividir entre ${n+1}: falta ese factor en v.`});
+    const cands=[noDu,...shuffle(pool)].map(w=>({...w,tex:listTex(w.items)}));
+    turns.push({type:'apply',cur:listTex([{int:true,c:lead,inner:tm([1,1],n,{l:j0})}]),
+      correct:{tex:okTex,items:okItems},wrong:choose3(okTex,cands),
+      fk:x=>frVal(lead)*Math.pow(x,n)*Math.pow(Math.log(x),j0),
+      hint:T`u=${lnP(j0)},\quad dv=${dvTex}`,
+      info:[{t:'Elegimos (ILATE: L primero)',tex:T`u=${lnP(j0)},\quad dv=${dvTex}`},
+            {t:'Calculamos',tex:T`du=${j0===1?T`\frac{1}{x}`:T`\frac{${j0}${lnP(j0-1)}}{x}`}\,dx,\quad v=${listTex([tm(fr(1,n+1),n+1)])}`}]});
+    acc.push(tm(frMul(Mult,A.c),n+1,{l:j0}));
+    Mult=frMul(Mult,gam);jj--;
+  }
+  const fin=tm(frMul(Mult,fr(1,n+1)),n+1);
+  const terms=acc.concat([fin]);
+  const orig=listTex([tm(lam,n,{l:j})]);
+  turns.push(finalTurn(terms,1,orig,T`\text{Suma los términos de cada paso, con sus signos}`,
+    [{t:'Última integral',tex:T`\int ${n===0?'':magTex(tm([1,1],n))+T`\,`}dx=${listTex([fin].map(t=>({...t,c:fr(1,n+1)})))}`},
+     {t:'Primitiva',tex:listTex(terms)+'+C'}]));
+  return {tex:orig,cats:n===0?['L']:['L','A'],turns,
+    f:x=>frVal(lam)*Math.pow(x,n)*Math.pow(Math.log(x),j),F:x=>terms.reduce((s,t)=>s+evT(t,x),0)};
+}
+
+/* ---------- Motor C: cíclicas e^{ax}·sen/cos(bx) ---------- */
+function cycEx({a,b,base}){
+  const T0=base,T1=base==='sin'?'cos':'sin',S={sin:-1,cos:1};
+  const lab={sin:'sen',cos:'cos'};
+  const stepData=Tc=>{const Tn=Tc==='sin'?'cos':'sin',vc=fr(S[Tc],b);
+    return {Tc,Tn,vc,A:tm(vc,0,{e:a,t:Tn,b}),gam:frMul([-a,1],vc),inner:tm([1,1],0,{e:a,t:Tn,b})};};
+  const expTex=magTex(tm([1,1],0,{e:a}));
+  const stepTurn=Tc=>{
+    const d=stepData(Tc);
+    const okItems=[d.A,{int:true,c:d.gam,inner:d.inner}],okTex=listTex(okItems);
+    const pool=[
+      {items:[d.A,{int:true,c:frNeg(d.gam),inner:d.inner}],why:'Revisa el signo de la integral restante: es −∫v du y v ya trae su signo.'},
+      {items:[neg(d.A),{int:true,c:d.gam,inner:d.inner}],why:'El signo de uv está mal: ∫sen = −cos y ∫cos = sen.'},
+      {items:[neg(d.A),{int:true,c:frNeg(d.gam),inner:d.inner}],why:'Cuidado con el signo de v: afecta a los dos términos.'},
+      {items:[d.A,{int:true,c:d.gam,inner:tm([1,1],0,{e:a,t:Tc,b})}],why:'Al integrar dv el seno se vuelve coseno (y viceversa): la integral restante cambia de función.'}
+    ];
+    if(Math.abs(b)!==1){const vw=fr(S[Tc]<0?-1:1,1);pool.push({items:[tm(vw,0,{e:a,t:d.Tn,b}),{int:true,c:frMul([-a,1],vw),inner:d.inner}],why:`Al integrar ${lab[Tc]}(${b}x) hay que dividir entre ${b}.`});}
+    if(Math.abs(a)!==1)pool.push({items:[d.A,{int:true,c:frNeg(d.vc),inner:d.inner}],why:`Al derivar e^(${a}x) aparece el factor ${a}: du = ${a}e^(${a}x) dx.`});
+    const dv=magTex(tm([1,1],0,{t:Tc,b}));
+    return {type:'apply',cur:listTex([{int:true,c:[1,1],inner:tm([1,1],0,{e:a,t:Tc,b})}]),
+      correct:{tex:okTex,items:okItems},
+      wrong:choose3(okTex,shuffle(pool).map(w=>({...w,tex:listTex(w.items)}))),
+      fk:x=>Math.exp(a*x)*(Tc==='sin'?Math.sin(b*x):Math.cos(b*x)),
+      hint:T`u=${expTex},\quad dv=${dv}\,dx`,
+      info:[{t:'Elegimos (misma u en los dos pasos)',tex:T`u=${expTex},\quad dv=${dv}\,dx`},
+            {t:'Calculamos',tex:T`du=${a===1?'':a===-1?'-':a}${expTex}\,dx,\quad v=${listTex([tm(d.vc,0,{t:d.Tn,b})])}`}]};
+  };
+  const d1=stepData(T0),d2=stepData(T1);
+  const prod=frMul(d1.gam,d2.gam),D=frAdd([1,1],frNeg(prod));
+  const c0=magTex(tm([1,1],0,{e:a,t:T0,b})),c1=magTex(tm([1,1],0,{e:a,t:T1,b}));
+  const relI=[d1.A,{int:true,c:d1.gam,lab:'J',inner:d1.inner}];
+  const relJ=[d2.A,{int:true,c:d2.gam,lab:'I',inner:d2.inner}];
+  const comb=[d1.A,{...d2.A,c:frMul(d1.gam,d2.A.c)}];
+  let cs,cc;if(T0==='sin'){cs=a;cc=-b;}else{cs=b;cc=a;}
+  const den=a*a+b*b,g=gcd(gcd(Math.abs(cs),Math.abs(cc)),den),rs=cs/g,rc=cc/g,rd=den/g;
+  const form=(s,c,d)=>{const P=listTex([tm([s,1],0,{t:'sin',b}),tm([c,1],0,{t:'cos',b})]);return d===1?T`${expTex}\left(${P}\right)`:T`\frac{${expTex}\left(${P}\right)}{${d}}`;};
+  const okF=form(rs,rc,rd)+'+C';
+  const alt=Math.pow(Math.abs(a)+Math.abs(b),2)/g;
+  const cands=shuffle([
+    W(form(rc,rs,rd)+'+C','Los coeficientes de sen y cos están intercambiados: revisa el despeje.'),
+    W(form(-rs,-rc,rd)+'+C','El signo global está al revés: revisa el paso de pasar I al otro lado.'),
+    W(form(rs,-rc,rd)+'+C','Hay un signo mal dentro del paréntesis.'),
+    W(form(rs,rc,alt)+'+C',`El denominador sale de 1 − γ₁γ₂ y es a² + b² = ${den}, no (|a|+|b|)².`),
+    W(form(rs,rc,1)+'+C','Falta dividir entre a² + b² al despejar I.')
+  ]);
+  const solve={type:'solve',
+    cur:T`\begin{aligned}&I=\int ${c0}\,dx,\quad J=\int ${c1}\,dx\\&I=${listTex(relI)}\\&J=${listTex(relJ)}\end{aligned}`,
+    correct:{tex:okF},wrong:choose3(okF,cands),
+    hint:T`\text{Reemplaza }J\text{ en }I\text{ y agrupa los términos con }I`,
+    info:[{t:'Reemplazamos J',tex:T`I=${listTex([...comb,{int:true,c:prod,lab:'I',inner:d2.inner}])}`},
+          {t:'Agrupamos I',tex:T`${coefTexS(D)}I=${listTex(comb)}`},
+          {t:'Despejamos',tex:T`I=${form(rs,rc,rd)}+C`}]};
+  const orig=pick([T`${expTex}${T`\,`}${magTex(tm([1,1],0,{t:T0,b}))}`,T`${magTex(tm([1,1],0,{t:T0,b}))}\,${expTex}`]);
+  return {tex:orig,cats:['T','E'],crown:false,turns:[stepTurn(T0),stepTurn(T1),solve],
+    f:x=>Math.exp(a*x)*(T0==='sin'?Math.sin(b*x):Math.cos(b*x)),
+    F:x=>Math.exp(a*x)*(cs*Math.sin(b*x)+cc*Math.cos(b*x))/den};
+}
+function coefTexS(f){const [n,d]=f;if(n===1&&d===1)return'';return d===1?String(n):T`\frac{${n}}{${d}}`;}
+
+/* ---------- sen(ln x), cos(ln x) ---------- */
+function lnTrigEx(base){
+  const S=T`\sin(\ln x)`,C=T`\cos(\ln x)`;
+  const tS=turn=>turn;
+  const aS={type:'apply',cur:T`\int\sin(\ln x)\,dx`,correct:{tex:T`x\sin(\ln x)-\int\cos(\ln x)\,dx`},
+    wrong:[W(T`x\sin(\ln x)+\int\cos(\ln x)\,dx`,'Revisa el signo: ∫u dv = uv − ∫v du.'),
+           W(T`x\sin(\ln x)-\int\frac{\cos(\ln x)}{x}\,dx`,'Falta v = x: v·du = x·cos(ln x)/x = cos(ln x).'),
+           W(T`x\sin(\ln x)-\int\sin(\ln x)\,dx`,'La derivada de sen(ln x) es cos(ln x)/x, no sen.')],
+    hint:T`u=\sin(\ln x),\quad dv=dx`,
+    info:[{t:'Elegimos',tex:T`u=\sin(\ln x),\quad dv=dx`},{t:'Calculamos',tex:T`du=\frac{\cos(\ln x)}{x}\,dx,\quad v=x`}],
+    chk:{A:x=>x*Math.sin(Math.log(x)),g:-1,nx:x=>Math.cos(Math.log(x)),fk:x=>Math.sin(Math.log(x))}};
+  const aC={type:'apply',cur:T`\int\cos(\ln x)\,dx`,correct:{tex:T`x\cos(\ln x)+\int\sin(\ln x)\,dx`},
+    wrong:[W(T`x\cos(\ln x)-\int\sin(\ln x)\,dx`,'La derivada de cos(ln x) es −sen(ln x)/x: ese signo menos invierte el de la fórmula.'),
+           W(T`x\cos(\ln x)+\int\frac{\sin(\ln x)}{x}\,dx`,'Falta v = x: v·du = x·sen(ln x)/x = sen(ln x).'),
+           W(T`x\sin(\ln x)+\int\cos(\ln x)\,dx`,'La derivada de cos(ln x) lleva sen, no cos.')],
+    hint:T`u=\cos(\ln x),\quad dv=dx`,
+    info:[{t:'Elegimos',tex:T`u=\cos(\ln x),\quad dv=dx`},{t:'Calculamos',tex:T`du=-\frac{\sin(\ln x)}{x}\,dx,\quad v=x`}],
+    chk:{A:x=>x*Math.cos(Math.log(x)),g:1,nx:x=>Math.sin(Math.log(x)),fk:x=>Math.cos(Math.log(x))}};
+  const sinBase=base==='sin';
+  const solve=sinBase?{type:'solve',
+      cur:T`\begin{aligned}&I=\int\sin(\ln x)\,dx\\&I=x\sin(\ln x)-\left[x\cos(\ln x)+I\right]\end{aligned}`,
+      correct:{tex:T`\frac{x}{2}\left(\sin(\ln x)-\cos(\ln x)\right)+C`},
+      wrong:[W(T`\frac{x}{2}\left(\sin(\ln x)+\cos(\ln x)\right)+C`,'Al abrir el corchete el cos queda con signo menos.'),
+             W(T`x\left(\sin(\ln x)-\cos(\ln x)\right)+C`,'Al pasar I sumando queda 2I: hay que dividir entre 2.'),
+             W(T`\frac{x}{2}\left(\cos(\ln x)-\sin(\ln x)\right)+C`,'El signo global está al revés.')],
+      info:[{t:'Abrimos',tex:T`I=x\sin(\ln x)-x\cos(\ln x)-I`},{t:'Despejamos',tex:T`2I=x\left(\sin(\ln x)-\cos(\ln x)\right)`}]}
+   :{type:'solve',
+      cur:T`\begin{aligned}&I=\int\cos(\ln x)\,dx\\&I=x\cos(\ln x)+\left[x\sin(\ln x)-I\right]\end{aligned}`,
+      correct:{tex:T`\frac{x}{2}\left(\sin(\ln x)+\cos(\ln x)\right)+C`},
+      wrong:[W(T`\frac{x}{2}\left(\sin(\ln x)-\cos(\ln x)\right)+C`,'Al abrir el corchete el sen queda con signo más.'),
+             W(T`x\left(\sin(\ln x)+\cos(\ln x)\right)+C`,'Al pasar I sumando queda 2I: hay que dividir entre 2.'),
+             W(T`-\frac{x}{2}\left(\sin(\ln x)+\cos(\ln x)\right)+C`,'El signo global está al revés.')],
+      info:[{t:'Abrimos',tex:T`I=x\cos(\ln x)+x\sin(\ln x)-I`},{t:'Despejamos',tex:T`2I=x\left(\sin(\ln x)+\cos(\ln x)\right)`}]};
+  solve.hint=T`\text{Pasa }I\text{ al lado izquierdo: queda }2I`;
+  return {tex:sinBase?S:C,cats:['T','L'],crown:false,turns:sinBase?[aS,aC,solve]:[aC,aS,solve],
+    f:sinBase?(x=>Math.sin(Math.log(x))):(x=>Math.cos(Math.log(x))),
+    F:sinBase?(x=>x/2*(Math.sin(Math.log(x))-Math.cos(Math.log(x)))):(x=>x/2*(Math.sin(Math.log(x))+Math.cos(Math.log(x))))};
+}
+
+/* ---------- Nivel 6: acertijos ---------- */
+const tA=(cur,ok,wr,hint,info,chk)=>({type:'apply',cur,correct:{tex:ok},wrong:wr,hint,info,chk});
+const tX=(type,cur,ok,wr,hint,info,extra)=>({type,cur,correct:{tex:ok},wrong:wr,hint,info,...extra});
+const tF=(cur,ok,wr,hint,info,extra)=>({type:'final',cur,correct:{tex:ok+'+C'},wrong:wr.map(w=>W(w.tex+'+C',w.why)),hint,info,...extra});
+const SW='Es una igualdad válida, pero no simplifica: la integral restante queda más complicada. Con ILATE conviene otra elección de u.';
+const SIGN='Revisa el signo: ∫u dv = uv − ∫v du.';
+
+const L6={
+arctan:()=>({tex:T`\arctan x`,cats:['I'],turns:[
+  tA(T`\int\arctan x\,dx`,T`x\arctan x-\int\frac{x}{1+x^{2}}\,dx`,[
+    W(T`x\arctan x+\int\frac{x}{1+x^{2}}\,dx`,SIGN),
+    W(T`x\arctan x-\int\frac{x}{\sqrt{1-x^{2}}}\,dx`,'Esa es la derivada de arcsen x; la de arctan x es 1/(1+x²).'),
+    W(T`x\arctan x-\int\frac{1}{1+x^{2}}\,dx`,'Falta v = x: v·du = x/(1+x²) dx.')],
+    T`u=\arctan x,\quad dv=dx`,
+    [{t:'Elegimos (ILATE: I antes que A)',tex:T`u=\arctan x,\quad dv=dx`},{t:'Calculamos',tex:T`du=\frac{1}{1+x^{2}}\,dx,\quad v=x`}],
+    {A:x=>x*Math.atan(x),g:-1,nx:x=>x/(1+x*x),fk:Math.atan}),
+  tF(T`\int\arctan x\,dx`,T`x\arctan x-\frac{1}{2}\ln\left(1+x^{2}\right)`,[
+    W(T`x\arctan x-\ln\left(1+x^{2}\right)`,'Con w = 1+x², dw = 2x dx: ∫x/(1+x²)dx = ½ln(1+x²), falta el ½.'),
+    W(T`x\arctan x+\frac{1}{2}\ln\left(1+x^{2}\right)`,'Revisa el signo: el menos de la fórmula se queda.'),
+    W(T`x\arctan x-\arctan x`,'∫x/(1+x²)dx no es arctan x; es un logaritmo (sustitución w = 1+x²).')],
+    T`\text{Sustitución }w=1+x^{2}`,
+    [{t:'Sustitución',tex:T`w=1+x^{2},\quad dw=2x\,dx`},{t:'Integramos',tex:T`\int\frac{x}{1+x^{2}}dx=\frac{1}{2}\ln\left(1+x^{2}\right)`}])],
+  f:Math.atan,F:x=>x*Math.atan(x)-Math.log(1+x*x)/2}),
+
+arcsin:()=>({tex:T`\arcsin x`,cats:['I'],turns:[
+  tA(T`\int\arcsin x\,dx`,T`x\arcsin x-\int\frac{x}{\sqrt{1-x^{2}}}\,dx`,[
+    W(T`x\arcsin x+\int\frac{x}{\sqrt{1-x^{2}}}\,dx`,SIGN),
+    W(T`x\arcsin x-\int\frac{x}{1+x^{2}}\,dx`,'Esa es la derivada de arctan x; la de arcsen x es 1/√(1−x²).'),
+    W(T`x\arcsin x-\int\frac{1}{\sqrt{1-x^{2}}}\,dx`,'Falta v = x: v·du = x/√(1−x²) dx.')],
+    T`u=\arcsin x,\quad dv=dx`,
+    [{t:'Elegimos (ILATE: I antes que A)',tex:T`u=\arcsin x,\quad dv=dx`},{t:'Calculamos',tex:T`du=\frac{1}{\sqrt{1-x^{2}}}\,dx,\quad v=x`}],
+    {A:x=>x*Math.asin(x),g:-1,nx:x=>x/Math.sqrt(1-x*x),fk:Math.asin}),
+  tF(T`\int\arcsin x\,dx`,T`x\arcsin x+\sqrt{1-x^{2}}`,[
+    W(T`x\arcsin x-\sqrt{1-x^{2}}`,'Con w = 1−x², ∫x/√(1−x²)dx = −√(1−x²); el menos de la fórmula lo vuelve +.'),
+    W(T`x\arcsin x+\frac{1}{2}\sqrt{1-x^{2}}`,'Al integrar w^(−1/2)·(−dw/2) el resultado es −√w, sin el ½.'),
+    W(T`x\arcsin x+\frac{1}{\sqrt{1-x^{2}}}`,'Esa expresión no es una primitiva: al integrar w^(−1/2) se sube el exponente a 1/2.')],
+    T`\text{Sustitución }w=1-x^{2}`,
+    [{t:'Sustitución',tex:T`w=1-x^{2},\quad dw=-2x\,dx`},{t:'Integramos',tex:T`\int\frac{x}{\sqrt{1-x^{2}}}dx=-\sqrt{1-x^{2}}`}])],
+  f:Math.asin,F:x=>x*Math.asin(x)+Math.sqrt(1-x*x)}),
+
+xarctan:()=>({tex:T`x\arctan x`,cats:['I','A'],turns:[
+  tA(T`\int x\arctan x\,dx`,T`\frac{x^{2}}{2}\arctan x-\frac{1}{2}\int\frac{x^{2}}{1+x^{2}}\,dx`,[
+    W(T`\frac{x^{2}}{2}\arctan x+\frac{1}{2}\int\frac{x^{2}}{1+x^{2}}\,dx`,SIGN),
+    W(T`\frac{x^{2}}{2}\arctan x-\frac{1}{2}\int\frac{x}{1+x^{2}}\,dx`,'v·du = (x²/2)·1/(1+x²): el numerador conserva x².'),
+    W(T`\frac{x^{2}}{2}\arctan x-\int\frac{x^{2}}{1+x^{2}}\,dx`,'Falta el ½ de v = x²/2 en la integral restante.')],
+    T`u=\arctan x,\quad dv=x\,dx`,
+    [{t:'Elegimos (ILATE: I antes que A)',tex:T`u=\arctan x,\quad dv=x\,dx`},{t:'Calculamos',tex:T`du=\frac{1}{1+x^{2}}\,dx,\quad v=\frac{x^{2}}{2}`}],
+    {A:x=>x*x/2*Math.atan(x),g:-0.5,nx:x=>x*x/(1+x*x),fk:x=>x*Math.atan(x)}),
+  tX('rewrite',T`\int\frac{x^{2}}{1+x^{2}}\,dx`,T`\int\left(1-\frac{1}{1+x^{2}}\right)dx`,[
+    W(T`\int\left(1+\frac{1}{1+x^{2}}\right)dx`,'Suma y resta 1 en el numerador: x² = (x²+1) − 1, así que el segundo término lleva signo menos.'),
+    W(T`\int\left(x-\frac{1}{1+x^{2}}\right)dx`,'(1+x²)/(1+x²) = 1, no x.'),
+    W(T`\int\left(1-\frac{1}{x^{2}}\right)dx`,'El denominador del segundo término sigue siendo 1+x².')],
+    T`\text{Suma y resta }1\text{ en el numerador}`,
+    [{t:'Truco',tex:T`\frac{x^{2}}{1+x^{2}}=\frac{(1+x^{2})-1}{1+x^{2}}=1-\frac{1}{1+x^{2}}`}]),
+  tF(T`\int x\arctan x\,dx`,T`\frac{x^{2}+1}{2}\arctan x-\frac{x}{2}`,[
+    W(T`\frac{x^{2}-1}{2}\arctan x-\frac{x}{2}`,'El arctan que aparece al integrar 1/(1+x²) entra con signo +: −½(x − arctan x).'),
+    W(T`\frac{x^{2}}{2}\arctan x-\frac{x}{2}`,'Se perdió el término +½ arctan x de la última integral.'),
+    W(T`\frac{x^{2}+1}{2}\arctan x+\frac{x}{2}`,'Revisa el signo del término −x/2.')],
+    T`\text{Suma los términos de cada paso}`,
+    [{t:'Integramos',tex:T`\int\left(1-\frac{1}{1+x^{2}}\right)dx=x-\arctan x`},{t:'Armamos',tex:T`\frac{x^{2}}{2}\arctan x-\frac{1}{2}\left(x-\arctan x\right)+C`}])],
+  f:x=>x*Math.atan(x),F:x=>(x*x+1)/2*Math.atan(x)-x/2}),
+
+xsec2:()=>({tex:T`x\sec^{2}x`,cats:['A','T'],turns:[
+  tA(T`\int x\sec^{2}x\,dx`,T`x\tan x-\int\tan x\,dx`,[
+    W(T`\frac{x^{2}}{2}\sec^{2}x-\int x^{2}\sec^{2}x\tan x\,dx`,SW),
+    W(T`x\tan x+\int\tan x\,dx`,SIGN),
+    W(T`x\sec x-\int\sec x\,dx`,'La integral de sec²x es tan x (no sec x).')],
+    T`u=x,\quad dv=\sec^{2}x\,dx`,
+    [{t:'Elegimos (ILATE: A antes que T)',tex:T`u=x,\quad dv=\sec^{2}x\,dx`},{t:'Calculamos',tex:T`du=dx,\quad v=\tan x`}],
+    {A:x=>x*Math.tan(x),g:-1,nx:Math.tan,fk:x=>x/Math.pow(Math.cos(x),2)}),
+  tF(T`\int x\sec^{2}x\,dx`,T`x\tan x+\ln\left|\cos x\right|`,[
+    W(T`x\tan x-\ln\left|\cos x\right|`,'∫tan x dx = −ln|cos x| y antes hay un menos: queda +ln|cos x|.'),
+    W(T`x\tan x+\ln\left|\sin x\right|`,'tan x = sen x / cos x: u = cos x, no sen x.'),
+    W(T`x\tan x+\sec x`,'sec x no es la primitiva de tan x; es ln|cos x| con signo menos.')],
+    T`\tan x=\frac{\sin x}{\cos x}`,
+    [{t:'Integramos',tex:T`\int\tan x\,dx=-\ln|\cos x|`},{t:'Armamos',tex:T`x\tan x-\left(-\ln|\cos x|\right)+C`}])],
+  f:x=>x/Math.pow(Math.cos(x),2),F:x=>x*Math.tan(x)+Math.log(Math.abs(Math.cos(x)))}),
+
+x3ex2:()=>({tex:T`x^{3}e^{x^{2}}`,cats:['A','E'],crown:false,turns:[
+  tX('sub',T`\int x^{3}e^{x^{2}}\,dx`,T`\frac{1}{2}\int w\,e^{w}\,dw`,[
+    W(T`\int w\,e^{w}\,dw`,'Falta el ½: dw = 2x dx ⇒ x dx = dw/2.'),
+    W(T`\frac{1}{2}\int w^{3}e^{w}\,dw`,'x³dx = x²·(x dx) = w·dw/2: queda w, no w³.'),
+    W(T`2\int w\,e^{w}\,dw`,'x dx = dw/2: se divide entre 2, no se multiplica.')],
+    T`w=x^{2},\quad dw=2x\,dx`,
+    [{t:'Sustituimos',tex:T`w=x^{2},\quad dw=2x\,dx`},{t:'Reescribimos',tex:T`x^{3}dx=x^{2}\cdot x\,dx=w\cdot\frac{dw}{2}`}]),
+  tA(T`\frac{1}{2}\int w\,e^{w}\,dw`,T`\frac{1}{2}we^{w}-\frac{1}{2}\int e^{w}\,dw`,[
+    W(T`\frac{w^{2}}{4}e^{w}-\frac{1}{4}\int w^{2}e^{w}\,dw`,SW),
+    W(T`\frac{1}{2}we^{w}+\frac{1}{2}\int e^{w}\,dw`,SIGN),
+    W(T`\frac{1}{2}we^{w}-\frac{1}{2}w\int e^{w}\,dw`,'No se puede sacar w de la integral: w no es constante.')],
+    T`u=w,\quad dv=e^{w}\,dw`,
+    [{t:'Elegimos (ILATE: A antes que E)',tex:T`u=w,\quad dv=e^{w}\,dw`},{t:'Calculamos',tex:T`du=dw,\quad v=e^{w}`}],
+    {A:x=>x*Math.exp(x)/2,g:-0.5,nx:Math.exp,fk:x=>x*Math.exp(x)/2}),
+  tF(T`\int x^{3}e^{x^{2}}\,dx`,T`\frac{1}{2}\left(x^{2}-1\right)e^{x^{2}}`,[
+    W(T`\frac{1}{2}\left(x^{2}+1\right)e^{x^{2}}`,'½we^w − ½e^w = ½(w − 1)e^w: el segundo término resta.'),
+    W(T`\left(x^{2}-1\right)e^{x^{2}}`,'Se perdió el factor ½ de la sustitución.'),
+    W(T`\frac{1}{2}x^{2}e^{x^{2}}`,'Falta el término −½e^w de la última integral.')],
+    T`\text{Vuelve a }x\text{ con }w=x^{2}`,
+    [{t:'Integramos',tex:T`\int e^{w}dw=e^{w}`},{t:'Volvemos a x',tex:T`\frac{1}{2}we^{w}-\frac{1}{2}e^{w}=\frac{1}{2}(w-1)e^{w}=\frac{1}{2}\left(x^{2}-1\right)e^{x^{2}}`}])],
+  f:x=>x*x*x*Math.exp(x*x),F:x=>0.5*(x*x-1)*Math.exp(x*x)}),
+
+esqrt:()=>({tex:T`e^{\sqrt{x}}`,cats:['E'],crown:false,turns:[
+  tX('sub',T`\int e^{\sqrt{x}}\,dx`,T`2\int w\,e^{w}\,dw`,[
+    W(T`\int w\,e^{w}\,dw`,'Falta el 2: x = w² ⇒ dx = 2w dw.'),
+    W(T`2\int e^{w}\,dw`,'Falta w: dx = 2w dw.'),
+    W(T`\frac{1}{2}\int w\,e^{w}\,dw`,'dx = 2w dw: se multiplica por 2, no se divide.')],
+    T`w=\sqrt{x},\quad x=w^{2},\quad dx=2w\,dw`,
+    [{t:'Sustituimos',tex:T`w=\sqrt{x},\quad x=w^{2},\quad dx=2w\,dw`},{t:'Reescribimos',tex:T`\int e^{\sqrt{x}}dx=\int e^{w}\cdot 2w\,dw`}]),
+  tA(T`2\int w\,e^{w}\,dw`,T`2we^{w}-2\int e^{w}\,dw`,[
+    W(T`2we^{w}+2\int e^{w}\,dw`,SIGN),
+    W(T`we^{w}-2\int e^{w}\,dw`,'Se perdió el factor 2 en el primer término.'),
+    W(T`2we^{w}-\int e^{w}\,dw`,'Se perdió el factor 2 en la integral restante.')],
+    T`u=w,\quad dv=e^{w}\,dw`,
+    [{t:'Elegimos (ILATE: A antes que E)',tex:T`u=w,\quad dv=e^{w}\,dw`},{t:'Calculamos',tex:T`du=dw,\quad v=e^{w}`}],
+    {A:x=>2*x*Math.exp(x),g:-2,nx:Math.exp,fk:x=>2*x*Math.exp(x)}),
+  tF(T`\int e^{\sqrt{x}}\,dx`,T`2e^{\sqrt{x}}\left(\sqrt{x}-1\right)`,[
+    W(T`2e^{\sqrt{x}}\left(\sqrt{x}+1\right)`,'2we^w − 2e^w = 2e^w(w − 1): el segundo término resta.'),
+    W(T`e^{\sqrt{x}}\left(\sqrt{x}-1\right)`,'Se perdió el factor 2 de dx = 2w dw.'),
+    W(T`2\sqrt{x}\,e^{\sqrt{x}}`,'Falta el término −2e^w de la última integral.')],
+    T`\text{Vuelve a }x\text{ con }w=\sqrt{x}`,
+    [{t:'Integramos',tex:T`\int e^{w}dw=e^{w}`},{t:'Volvemos a x',tex:T`2we^{w}-2e^{w}=2e^{w}(w-1)=2e^{\sqrt{x}}\left(\sqrt{x}-1\right)`}])],
+  f:x=>Math.exp(Math.sqrt(x)),F:x=>2*Math.exp(Math.sqrt(x))*(Math.sqrt(x)-1)}),
+
+sec3:()=>({tex:T`\sec^{3}x`,cats:['T'],crown:false,turns:[
+  tA(T`\int\sec^{3}x\,dx`,T`\sec x\tan x-\int\sec x\tan^{2}x\,dx`,[
+    W(T`\sec x\tan x+\int\sec x\tan^{2}x\,dx`,SIGN),
+    W(T`\sec x\tan x-\int\tan^{2}x\,dx`,'d(sec x) = sec x·tan x dx: no olvides el factor sec x.'),
+    W(T`\tan x\sec^{2}x-\int 2\sec^{2}x\tan x\,dx`,'No es el desarrollo de u = sec x, dv = sec²x dx; revisa u, du y v.')],
+    T`u=\sec x,\quad dv=\sec^{2}x\,dx`,
+    [{t:'Elegimos',tex:T`u=\sec x,\quad dv=\sec^{2}x\,dx`},{t:'Calculamos',tex:T`du=\sec x\tan x\,dx,\quad v=\tan x`}],
+    {A:x=>Math.tan(x)/Math.cos(x),g:-1,nx:x=>Math.pow(Math.tan(x),2)/Math.cos(x),fk:x=>1/Math.pow(Math.cos(x),3)}),
+  tX('rewrite',T`\int\sec x\tan^{2}x\,dx`,T`\int\sec^{3}x\,dx-\int\sec x\,dx`,[
+    W(T`\int\sec^{3}x\,dx+\int\sec x\,dx`,'tan²x = sec²x − 1: el segundo término lleva signo menos.'),
+    W(T`\int\sec^{2}x\,dx-\int\sec x\,dx`,'Al multiplicar sec x · sec²x sale sec³x, no sec²x.'),
+    W(T`\int\sec x\,dx-\int\sec^{3}x\,dx`,'Los signos están intercambiados: tan²x = sec²x − 1.')],
+    T`\tan^{2}x=\sec^{2}x-1`,
+    [{t:'Identidad',tex:T`\sec x\tan^{2}x=\sec x\left(\sec^{2}x-1\right)=\sec^{3}x-\sec x`}]),
+  tF(T`I=\sec x\tan x-\left(I-\int\sec x\,dx\right)`,T`\frac{1}{2}\left(\sec x\tan x+\ln\left|\sec x+\tan x\right|\right)`,[
+    W(T`\sec x\tan x+\ln\left|\sec x+\tan x\right|`,'Al pasar I sumando queda 2I: hay que dividir entre 2.'),
+    W(T`\frac{1}{2}\left(\sec x\tan x-\ln\left|\sec x+\tan x\right|\right)`,'Al abrir el paréntesis, +∫sec x dx queda con signo más.'),
+    W(T`\frac{1}{2}\sec x\tan x`,'Falta el término con ∫sec x dx = ln|sec x + tan x|.')],
+    T`\text{Pasa }I\text{ al lado izquierdo: queda }2I`,
+    [{t:'Despejamos',tex:T`2I=\sec x\tan x+\int\sec x\,dx`},{t:'Usamos',tex:T`\int\sec x\,dx=\ln\left|\sec x+\tan x\right|`}],
+    {prompt:'Sustituye en I = ∫sec³x dx y despeja I (usa ∫sec x dx = ln|sec x + tan x|). ¿Cuál es I?'})],
+  f:x=>1/Math.pow(Math.cos(x),3),F:x=>0.5*(Math.tan(x)/Math.cos(x)+Math.log(Math.abs(1/Math.cos(x)+Math.tan(x))))}),
+
+lnx2:()=>({tex:T`\ln\left(x^{2}+1\right)`,cats:['L'],turns:[
+  tA(T`\int\ln\left(x^{2}+1\right)dx`,T`x\ln\left(x^{2}+1\right)-\int\frac{2x^{2}}{x^{2}+1}\,dx`,[
+    W(T`x\ln\left(x^{2}+1\right)+\int\frac{2x^{2}}{x^{2}+1}\,dx`,SIGN),
+    W(T`x\ln\left(x^{2}+1\right)-\int\frac{2x}{x^{2}+1}\,dx`,'Falta v = x: v·du = x·2x/(x²+1).'),
+    W(T`x\ln\left(x^{2}+1\right)-\int\frac{x^{2}}{x^{2}+1}\,dx`,'Regla de la cadena: (ln(x²+1))′ = 2x/(x²+1); falta el 2.')],
+    T`u=\ln\left(x^{2}+1\right),\quad dv=dx`,
+    [{t:'Elegimos (ILATE: L primero)',tex:T`u=\ln\left(x^{2}+1\right),\quad dv=dx`},{t:'Calculamos',tex:T`du=\frac{2x}{x^{2}+1}\,dx,\quad v=x`}],
+    {A:x=>x*Math.log(x*x+1),g:-1,nx:x=>2*x*x/(x*x+1),fk:x=>Math.log(x*x+1)}),
+  tX('rewrite',T`\int\frac{2x^{2}}{x^{2}+1}\,dx`,T`\int\left(2-\frac{2}{x^{2}+1}\right)dx`,[
+    W(T`\int\left(2+\frac{2}{x^{2}+1}\right)dx`,'2x² = 2(x²+1) − 2: el segundo término lleva signo menos.'),
+    W(T`\int\left(2x-\frac{2}{x^{2}+1}\right)dx`,'2(x²+1)/(x²+1) = 2, no 2x.'),
+    W(T`\int\left(1-\frac{2}{x^{2}+1}\right)dx`,'El primer término es 2(x²+1)/(x²+1) = 2.')],
+    T`\text{Suma y resta }2\text{ en el numerador}`,
+    [{t:'Truco',tex:T`\frac{2x^{2}}{x^{2}+1}=\frac{2(x^{2}+1)-2}{x^{2}+1}=2-\frac{2}{x^{2}+1}`}]),
+  tF(T`\int\ln\left(x^{2}+1\right)dx`,T`x\ln\left(x^{2}+1\right)-2x+2\arctan x`,[
+    W(T`x\ln\left(x^{2}+1\right)-2x-2\arctan x`,'Al restar la integral, −(−2 arctan x) = +2 arctan x.'),
+    W(T`x\ln\left(x^{2}+1\right)-2x+\arctan x`,'Falta el 2 delante de arctan x.'),
+    W(T`x\ln\left(x^{2}+1\right)+2x-2\arctan x`,'Los signos de 2x y 2 arctan x están al revés.')],
+    T`\int\frac{dx}{x^{2}+1}=\arctan x`,
+    [{t:'Integramos',tex:T`\int\left(2-\frac{2}{x^{2}+1}\right)dx=2x-2\arctan x`},{t:'Armamos',tex:T`x\ln\left(x^{2}+1\right)-\left(2x-2\arctan x\right)+C`}])],
+  f:x=>Math.log(x*x+1),F:x=>x*Math.log(x*x+1)-2*x+2*Math.atan(x)}),
+
+xsincos:()=>polyEx({m:1,kind:'sin',b:2,lam:[1,2],origTex:T`x\sin x\cos x`,pre:[
+  tX('rewrite',T`\int x\sin x\cos x\,dx`,T`\frac{1}{2}\int x\sin(2x)\,dx`,[
+    W(T`2\int x\sin(2x)\,dx`,'sen 2x = 2 sen x cos x ⇒ sen x cos x = ½ sen 2x (se divide entre 2).'),
+    W(T`\frac{1}{2}\int x\sin x\,dx`,'El ángulo se duplica: sen x cos x = ½ sen(2x).'),
+    W(T`\int x\sin(2x)\,dx`,'Falta el ½: sen x cos x = ½ sen(2x).')],
+    T`\sin 2x=2\sin x\cos x`,
+    [{t:'Identidad',tex:T`\sin x\cos x=\frac{1}{2}\sin(2x)`}])]})
+};
+const L6lnEng=()=>{const n=pick([0,0,-2,-3]);return lnEx({n,j:1});};
+
+function lamPick(){return pick([[1,1],[1,1],[2,1],[3,1]]);}
+function build(level){
+  switch(level){
+    case 1:{
+      if(Math.random()<.55){const kind=pick(['sin','cos','exp','exp']),b=kind==='exp'?pick([1,-1]):1;return polyEx({m:1,kind,b,lam:lamPick()});}
+      return lnEx({n:pick([1,2,3,4]),j:1,lam:lamPick()});}
+    case 2:{
+      if(Math.random()<.65){const kind=pick(['sin','cos','exp','exp']),b=kind==='exp'?pick([1,-1]):1;return polyEx({m:2,kind,b,lam:lamPick()});}
+      return lnEx({n:pick([0,1,2]),j:2,lam:pick([[1,1],[1,1],[2,1]])});}
+    case 3:{
+      if(Math.random()<.7){const kind=pick(['sin','cos','exp','exp']),b=kind==='exp'?pick([1,-1]):1;return polyEx({m:3,kind,b,lam:pick([[1,1],[1,1],[2,1]])});}
+      return lnEx({n:pick([0,1]),j:3});}
+    case 4:{
+      if(Math.random()<.8)return cycEx({a:pick([1,-1]),b:1,base:pick(['sin','cos'])});
+      return lnTrigEx(pick(['sin','cos']));}
+    case 5:{
+      if(Math.random()<.55){const m=pick([1,2,2,3]),kind=pick(['sin','cos','exp','exp']);
+        const b=kind==='exp'?pick([2,-2,3,-3]):pick(m===3?[2,3]:[2,3,4,5]);
+        return polyEx({m,kind,b});}
+      let a,b;do{a=pick([1,-1,2,-2,3,-3]);b=pick([1,2,3,4]);}while(Math.abs(a)===1&&b===1);
+      return cycEx({a,b,base:pick(['sin','cos'])});}
+    default:{
+      const k=pick(['arctan','arcsin','xarctan','xsec2','x3ex2','esqrt','sec3','lnx2','xsincos','ln','ln']);
+      return k==='ln'?L6lnEng():L6[k]();}
+  }
+}
+function makeExercise(level){
+  for(let i=0;i<80;i++){
+    let ex;try{ex=build(level);}catch(e){if(typeof console!=='undefined'&&console.warn)console.warn(e);continue;}
+    const ok=ex.turns.every(t=>t.wrong.length===3&&new Set([t.correct.tex,...t.wrong.map(w=>w.tex)]).size===4);
+    if(ok){ex.turns.forEach(t=>{t.prompt=t.prompt||PROMPT[t.type];});ex.level=level;return ex;}
+  }
+  throw new Error('No se pudo generar el nivel '+level);
+}
+
+/*GEN-END*/
+</script>
+
+<script>
+(function(){
+const T=String.raw;
+const GUARDS=[
+ {n:1,emoji:'🗿',name:'Gólem de Piedra',title:'Una sola vez',desc:'Aplicas por partes una sola vez: algebraica × trigonométrica o exponencial, y algebraica × ln x.',ex:T`\int x\sin x\,dx`,
+  taunt:['Solo me parto con UNA buena elección de u…','Soy pesado, pero me rompes de un golpe.','¿Eliges tú a u o elijo yo?']},
+ {n:2,emoji:'🐉',name:'Hidra Bicéfala',title:'Dos veces',desc:'Dos cabezas, dos aplicaciones: la integral que queda hay que partirla otra vez.',ex:T`\int x^{2}e^{x}\,dx`,
+  taunt:['Corta una cabeza y aparece otra integral…','Dos veces, ¡y sin equivocarte!','Mis cabezas se parecen, pero no son iguales.']},
+ {n:3,emoji:'🦁',name:'Quimera',title:'Tres veces',desc:'Tres cabezas: tres aplicaciones seguidas. Aquí los signos son la trampa.',ex:T`\int x^{3}\cos x\,dx`,
+  taunt:['León, cabra y serpiente… ¡tres veces!','Los signos alternan, no te pierdas.','Esto ya es resistencia.']},
+ {n:4,emoji:'🐍',name:'Uróboros',title:'Integrales cíclicas',desc:'La serpiente se muerde la cola: tras partir dos veces reaparece la integral original y hay que despejarla.',ex:T`\int e^{x}\sin x\,dx`,
+  taunt:['Termino donde empiezo…','Si vuelves a la misma integral, ¡despéjala!','Mantén la misma u en los dos pasos.']},
+ {n:5,emoji:'🐙',name:'Kraken de los Argumentos',title:'Argumentos compuestos',desc:'Funciones con argumentos como 2x, 3x o 5x: ahora aparecen factores 1/b y fracciones.',ex:T`\int e^{3x}\sin(2x)\,dx`,
+  taunt:['Mis tentáculos traen coeficientes…','Cuidado: ¡dividir entre b!','Las fracciones se acumulan.']},
+ {n:6,emoji:'🔮',name:'El Oráculo',title:'Acertijos',desc:'Integrales sin el formato habitual: ln x, arctan x, sec³x, sustitución + partes, identidades…',ex:T`\int\arctan x\,dx`,
+  taunt:['No todo se ve como algebraica × algo…','Pregunta bien y responderé.','A veces dv es simplemente dx.']}
+];
+const LS='torre-ilate-v1';
+const def=()=>({level:1,streak:0,miss:0,total:0,perfect:0,score:0,top:1,done:false});
+let S=load();
+function load(){try{return Object.assign(def(),JSON.parse(localStorage.getItem(LS))||{});}catch(e){return def();}}
+function save(){try{localStorage.setItem(LS,JSON.stringify(S));}catch(e){}}
+const $=id=>document.getElementById(id);
+function tex(el,t,display){
+  if(window.katex){try{katex.render(t,el,{displayMode:!!display,throwOnError:false});return;}catch(e){}}
+  el.textContent=t;
+}
+
+/* ---------- Portada ---------- */
+function buildGlyphs(){
+  const g=['∫','u','dv','du','v','x²','ln','π','eˣ','sen','∑','f′','arctan'],box=$('glyphs');
+  for(let i=0;i<22;i++){const s=document.createElement('span');s.className='glyph';s.textContent=pick(g);
+    s.style.left=rnd(0,96)+'%';s.style.fontSize=rnd(28,92)+'px';s.style.animationDuration=rnd(28,64)+'s';s.style.animationDelay='-'+rnd(0,64)+'s';box.appendChild(s);}
+}
+function buildHeroTower(){
+  const cols=['#ffd166','#ff5d8f','#4cf2c3','#b18cff','#ff9f5a','#7dd3fc'];
+  let s='<svg viewBox="0 0 240 440" class="tower-svg"><defs><linearGradient id="st" x1="0" x2="1"><stop offset="0" stop-color="#252256"/><stop offset=".5" stop-color="#3a367f"/><stop offset="1" stop-color="#201d4a"/></linearGradient></defs>';
+  s+='<ellipse cx="120" cy="426" rx="104" ry="10" fill="rgba(0,0,0,.45)"/>';
+  for(let i=0;i<6;i++){
+    const w=170-i*12,x=(240-w)/2,y=372-i*58;
+    s+=`<rect x="${x}" y="${y}" width="${w}" height="58" rx="3" fill="url(#st)" stroke="#5a55b0" stroke-width="2"/>`;
+    for(let k=0;k<4;k++)s+=`<line x1="${x+6}" x2="${x+w-6}" y1="${y+10+k*13}" y2="${y+10+k*13}" stroke="#4a46a0" stroke-width="1" opacity=".35"/>`;
+    s+=`<rect x="${120-9}" y="${y+16}" width="18" height="26" rx="9" fill="${cols[i]}" class="win" style="animation-delay:${i*.4}s"/>`;
+    s+=`<text x="${x+10}" y="${y+50}" font-family="Press Start 2P,monospace" font-size="9" fill="#9a96d8">${i+1}</text>`;
+  }
+  const ty=372-6*58+ 2, tw=170-6*12, tx=(240-tw)/2;
+  for(let k=0;k<5;k++)s+=`<rect x="${tx+k*(tw/5)+2}" y="${ty-14}" width="${tw/5-6}" height="14" fill="#3a367f" stroke="#5a55b0" stroke-width="2"/>`;
+  s+=`<line x1="120" y1="${ty-14}" x2="120" y2="${ty-54}" stroke="#aaa" stroke-width="3"/><path d="M120 ${ty-54} l34 10 l-34 10z" fill="#ff5d8f"/>`;
+  s+=`<path d="M104 438 v-30 a16 16 0 0 1 32 0 v30z" fill="#120f30" stroke="#5a55b0" stroke-width="2"/>`;
+  $('heroTower').innerHTML=s+'</svg>';
+}
+function renderTower(){
+  const ol=$('tower');ol.innerHTML='';
+  [...GUARDS].reverse().forEach(g=>{
+    const li=document.createElement('li');
+    const cleared=S.done||g.n<S.top&&g.n!==S.level,cur=g.n===S.level;
+    li.className='floor '+(cur?'cur':cleared?'cleared':(g.n>S.top?'locked':''));
+    li.innerHTML=`<div class="em">${g.emoji}</div><div><div class="nm">PISO ${g.n}</div><h3>${g.name} · ${g.title}</h3><p>${g.desc}</p></div><div class="ex"></div>`;
+    ol.appendChild(li);tex(li.querySelector('.ex'),g.ex,false);
+  });
+  const has=S.total>0;
+  $('start').textContent=has?`⚔ Continuar en el piso ${S.level}`:'⚔ Entrar a la torre';
+  $('start2').textContent=has?`⚔ Continuar en el piso ${S.level}`:'⚔ Entrar a la torre';
+  $('fresh').hidden=!has;$('resetTop').hidden=!has;
+}
+
+/* ---------- Juego ---------- */
+let ex=null,ti=0,exOK=true,hintUsed=false,answered=false,curLevel=1,hintOn=false;
+const ORDER='ILATE';
+function G(){return GUARDS[curLevel-1];}
+function renderHearts(crack){
+  const h=$('hearts');h.innerHTML='';
+  for(let i=0;i<2;i++){const s=document.createElement('span');s.className='heart'+(i>=2-S.miss?' lost':'');if(crack&&i===2-S.miss)s.classList.add('crack');s.textContent='❤';h.appendChild(s);}
+}
+function renderHP(){[...$('hp').children].forEach((el,i)=>el.classList.toggle('gone',i>=3-S.streak));}
+function hud(){
+  const g=G();
+  $('boss').textContent=g.emoji;$('bossName').textContent=g.name;$('floorTag').textContent=`PISO ${g.n} · ${g.title.toUpperCase()}`;
+  $('score').textContent='★ '+S.score;
+  renderHearts();renderHP();
+  const mini=$('mini');mini.innerHTML='';
+  GUARDS.forEach(x=>{const i=document.createElement('i');if(x.n<curLevel)i.className='done';else if(x.n===curLevel)i.className='cur';mini.appendChild(i);});
+}
+function startExercise(){
+  curLevel=S.level;ex=makeExercise(curLevel);ti=0;exOK=true;hintUsed=false;
+  $('boss').className='boss';
+  $('bubble').textContent=pick(G().taunt);
+  hud();showTurn();
+}
+const TYPES={apply:'⚔ Ataque',final:'🏆 Botín',rewrite:'🧩 Ingenio',sub:'🧩 Ingenio',solve:'🧠 Despeje'};
+function liate(on){
+  const cats=ex.cats||[];
+  const first=ORDER.split('').find(c=>cats.includes(c));
+  [...$('liate').children].forEach(s=>{
+    const L=s.textContent;s.className='';
+    if(on&&cats.includes(L)){s.classList.add(L===first&&ex.crown!==false?'crown':'on');}
+  });
+}
+function showTurn(){
+  const t=ex.turns[ti];answered=false;hintOn=false;
+  $('turnTag').textContent=`TURNO ${ti+1}/${ex.turns.length}`;
+  $('turnType').textContent=TYPES[t.type]||'⚔ Ataque';
+  $('prompt').textContent=t.prompt;
+  const cur=t.cur.includes('aligned')?t.cur:T`${t.cur}=\;\color{#ffd166}{?}`;
+  tex($('problem'),T`\displaystyle ${cur}`,true);
+  $('hint').innerHTML='';$('fbWrap').innerHTML='';$('nextBtn').hidden=true;$('hintBtn').disabled=false;
+  liate(hintUsed);
+  const pre=t.type==='solve'?'I=\\;':'=\\;';
+  const opts=shuffle([{tex:t.correct.tex,ok:true},...t.wrong.map(w=>({tex:w.tex,ok:false,why:w.why}))]);
+  const box=$('opts');box.innerHTML='';
+  opts.forEach((o,i)=>{
+    const b=document.createElement('button');b.className='opt';b.type='button';
+    b.innerHTML=`<span class="k">${'ABCD'[i]}</span><span class="m"></span>`;
+    box.appendChild(b);tex(b.querySelector('.m'),T`\displaystyle ${pre}${o.tex}`,false);
+    b.addEventListener('click',()=>choose(o,opts));o.el=b;
+  });
+}
+function floatText(txt){const d=document.createElement('div');d.className='dmg';d.textContent=txt;$('arena').appendChild(d);setTimeout(()=>d.remove(),1200);}
+function choose(o,opts){
+  if(answered)return;answered=true;
+  const t=ex.turns[ti],ok=o.ok,last=ti===ex.turns.length-1;
+  opts.forEach(x=>{x.el.disabled=true;if(x.ok)x.el.classList.add('right');else if(x===o)x.el.classList.add('wrong');else x.el.classList.add('dim');});
+  $('hintBtn').disabled=true;
+  if(ok)S.score+=10;else exOK=false;
+  const fb=document.createElement('div');fb.className='fb '+(ok?'good':'bad');
+  fb.innerHTML=`<h3>${ok?'¡Bien!':'No es esa'}</h3>${ok?'':'<p class="why"></p>'}<ol></ol>`;
+  if(!ok)fb.querySelector('.why').textContent=o.why;
+  const ol=fb.querySelector('ol');
+  t.info.forEach(s=>{const li=document.createElement('li');li.innerHTML=`<span class="st">${s.t}</span><div class="stm"></div>`;ol.appendChild(li);tex(li.querySelector('.stm'),T`\displaystyle ${s.tex}`,false);});
+  $('fbWrap').innerHTML='';$('fbWrap').appendChild(fb);
+  let outcome=null;
+  if(last)outcome=finishExercise(fb);
+  const nb=$('nextBtn');
+  if(outcome&&(outcome.defeated||outcome.finished))nb.hidden=true;
+  else{nb.textContent=last?'Siguiente combate →':'Siguiente turno →';nb.hidden=false;nb.focus({preventScroll:true});}
+  save();$('score').textContent='★ '+S.score;
+  fb.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function resultBox(cls,html,fb){const r=document.createElement('div');r.className='result '+cls;r.innerHTML=html;fb.appendChild(r);}
+function finishExercise(fb){
+  S.total++;
+  const g=G();let out={};
+  if(exOK&&!hintUsed){
+    S.perfect++;S.streak++;S.miss=0;S.score+=25;
+    $('boss').classList.remove('hit');void $('boss').offsetWidth;$('boss').classList.add('hit');
+    floatText('−1 HP');renderHP();
+    if(S.streak>=3){
+      if(S.level<6){
+        out.defeated=true;resultBox('crit',`🏆 ¡Golpe final! ${g.name} cae derrotado.`,fb);
+        $('boss').className='boss dead';
+        setTimeout(()=>levelUp(g),1100);
+      }else{
+        out.finished=true;S.done=true;S.streak=0;resultBox('crit',`🏆 ¡Golpe final! ${g.name} se desvanece.`,fb);
+        $('boss').className='boss dead';setTimeout(finale,1100);
+      }
+    }else resultBox('crit',`⚔ ¡Golpe crítico! ${g.name} pierde 1 de vida (${3-S.streak} restantes).`,fb);
+  }else if(exOK){
+    S.miss=0;resultBox('help','🛡 Lo resolviste con ayuda: no hay daño al guardián, pero tampoco pierdes corazones.',fb);
+  }else{
+    S.streak=0;S.miss++;
+    $('flash').classList.remove('on');void $('flash').offsetWidth;$('flash').classList.add('on');
+    renderHearts(true);renderHP();
+    if(S.miss>=2&&S.level>1){
+      S.level--;S.miss=0;
+      resultBox('fail',`💔 Te quedaste sin corazones. Retrocedes al piso ${S.level} (${GUARDS[S.level-1].name}) para recuperar fuerzas.`,fb);
+    }else if(S.miss>=2){
+      S.miss=0;resultBox('fail','💔 Perdiste los corazones, pero el Gólem te deja respirar: los recuperas. ¡Inténtalo de nuevo!',fb);
+    }else resultBox('fail','💔 El guardián te alcanzó: pierdes un corazón. Dos combates fallidos seguidos y retrocedes un piso.',fb);
+  }
+  S.top=Math.max(S.top,S.level);
+  return out;
+}
+function levelUp(g){
+  S.level++;S.streak=0;S.miss=0;S.top=Math.max(S.top,S.level);save();
+  const n=GUARDS[S.level-1];
+  $('luEmoji').textContent=g.emoji;$('luTitle').textContent=`¡${g.name} derrotado!`;
+  $('luText').textContent=`Subes al piso ${n.n}: ${n.emoji} ${n.name} (${n.title}).`;
+  $('levelup').hidden=false;confetti(50);
+}
+function confetti(n){
+  const cols=['#ffd166','#ff5d8f','#4cf2c3','#b18cff','#4ade80','#fff'];
+  for(let i=0;i<n;i++){const d=document.createElement('div');d.className='conf';d.style.left=rnd(0,100)+'vw';d.style.background=pick(cols);d.style.animationDuration=(2.2+Math.random()*2.5)+'s';d.style.animationDelay=(Math.random()*.8)+'s';document.body.appendChild(d);setTimeout(()=>d.remove(),5800);}
+}
+function finale(){save();$('finale').hidden=false;confetti(110);}
+function toast(t){const e=$('toast');e.textContent=t;e.classList.add('show');clearTimeout(toast.h);toast.h=setTimeout(()=>e.classList.remove('show'),2600);}
+function show(game){
+  $('landing').hidden=game;$('gameView').hidden=!game;window.scrollTo(0,0);
+  if(game)startExercise();else renderTower();
+}
+
+/* ---------- Eventos ---------- */
+$('start').onclick=$('start2').onclick=()=>show(true);
+$('home').onclick=()=>show(false);
+$('nextBtn').onclick=()=>{if(ti<ex.turns.length-1){ti++;showTurn();}else startExercise();};
+$('hintBtn').onclick=()=>{
+  if(answered)return;hintUsed=true;hintOn=true;liate(true);
+  const t=ex.turns[ti];$('hint').innerHTML='<span id="hh"></span>';tex($('hh'),t.hint,false);
+  $('hintBtn').disabled=true;toast('Pista usada: este combate no contará como golpe');
+};
+$('luBtn').onclick=()=>{$('levelup').hidden=true;startExercise();};
+$('keep').onclick=()=>{$('finale').hidden=true;S.level=6;S.streak=0;startExercise();};
+$('goHome').onclick=()=>{$('finale').hidden=true;show(false);};
+const reset=()=>{if(confirm('¿Borrar tu progreso y empezar desde el piso 1?')){S=def();save();renderTower();}};
+$('fresh').onclick=$('resetTop').onclick=reset;
+document.addEventListener('keydown',e=>{
+  if($('gameView').hidden||!$('levelup').hidden||!$('finale').hidden)return;
+  const k=e.key.toLowerCase();
+  const idx='1234'.indexOf(k)>=0?'1234'.indexOf(k):'abcd'.indexOf(k);
+  if(!answered&&k.length===1&&idx>=0&&idx<4){const b=$('opts').children[idx];if(b)b.click();}
+  else if(answered&&e.key==='Enter'&&!$('nextBtn').hidden&&document.activeElement!==$('nextBtn')){e.preventDefault();$('nextBtn').click();}
+});
+document.addEventListener('DOMContentLoaded',()=>{
+  buildGlyphs();buildHeroTower();
+  const sp=$('spell');const render=()=>tex(sp,T`\displaystyle\int u\,dv=uv-\int v\,du`,false);
+  render();renderTower();
+});
+})();
+</script>
+<noscript><p style="padding:20px;text-align:center">Esta práctica necesita JavaScript activado.</p></noscript>
+</body>
+</html>
